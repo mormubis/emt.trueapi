@@ -1,8 +1,6 @@
-Cache = require "./cache"
+cache = require "./cache"
 q = require "q"
 request = require "request"
-
-cache = new Cache { stdTTL: 60, checkperiod: 120 }
 
 module.exports = (options = {}) ->
   defer = q.defer()

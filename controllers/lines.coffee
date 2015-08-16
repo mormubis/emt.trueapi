@@ -1,145 +1,106 @@
-Cache = require "../lib/cache"
+cache = require "../lib/cache"
 express = require "express"
 EMT = require "../emt"
+filter = require "../lib/filter"
+geolib = require "geolib"
 q = require "q"
 _ = require "underscore"
-nameFilter = require "../filters/name"
 
-cache = new Cache { stdTTL: 60, checkperiod: 120 }
-
-getLinesInformation = (line, extended) ->
+getLines = (line, extended) ->
   defer = q.defer()
   key = line or "all"
   key += ":extended" if extended
 
   cache.get key
-  .then defer.resolve
   .catch ->
-    EMT.lines(line)
-    .get "resultValues"
-    .then (response) ->
-      response ?= []
-      # FIXME Check http://opendata.emtmadrid.es/Foros.aspx?forumid=40&threadid=418
-      unless _.isArray response
-        response = [response]
-
-      lines = []
-
-      for item in response
-        lines[parseInt item.line] =
-          name: item.label
-          number: item.line
-          sources: [item.nameA, item.nameB]
-          stops: []
-
-      return lines
+    EMT.lines line
     .then (lines) ->
       if extended
         return EMT.stops()
-        .get "resultValues"
-        .then (response) ->
-          stops = for stop in response
-            name: stop.name
-            lines: (_.map stop.lines, (value) -> (value.split "/").shift())
-            latitude: stop.latitude
-            longitude: stop.longitude
-
+        .then (stops) ->
           for stop in stops
             for line in stop.lines
-              if lines[parseInt line]
-                lines[parseInt line].stops.push
+              if lines[parseInt line.number]
+                lines[parseInt line.number].stops.push
                   name: stop.name
                   latitude: stop.latitude
                   longitude: stop.longitude
 
-          return lines
-
-      return lines
+          lines
+      lines
+    # save cache
     .then (lines) ->
-      lines = _.filter lines
       cache.set key, lines, 2 * 60 * 60
-      defer.resolve lines
+      lines
+  # cleaning
+  .then (lines) ->
+    defer.resolve _.filter lines
   .catch defer.reject
 
   defer.promise
 
-toRadians = (coordinate) ->
-  coordinate * Math.PI / 180
-
-getDistance = (origin, target) ->
-  originLatitudeRad = toRadians origin.latitude
-  targetLatitudeRad = toRadians target.latitude
-
-  (Math.acos (Math.sin originLatitudeRad) * (Math.sin targetLatitudeRad) + (Math.cos originLatitudeRad) * (Math.cos targetLatitudeRad) * (Math.cos toRadians origin.longitude - target.longitude)) * 180 / Math.PI * 60 * 1.1515 * 1.609344 * 1000
-
 module.exports = new express.Router()
 .get "/:id?", (req, res) ->
-  getLinesInformation req.params.id, req.query.latlng
+  getLines req.params.id, (req.query.latlng || req.query.nwlatlng)?
+  # coordinates filter
+  .then filter req.query.nwlatlng, (line) ->
+    nwlatlng = req.query.nwlatlng.split ","
+    selatlng = req.query.selatlng.split ","
+    coordinates = [
+      {latitude: nwlatlng[0], longitude: nwlatlng[1]}
+      {latitude: selatlng[0], longitude: nwlatlng[1]}
+      {latitude: selatlng[0], longitude: selatlng[1]}
+      {latitude: nwlatlng[0], longitude: selatlng[1]}
+    ]
+    isIn = false
+
+    for stop in line.stops
+      if geolib.isPointInside stop, coordinates
+        isIn = true
+        break
+
+    isIn
+  # distance filter
+  .then filter req.query.latlng, (line) ->
+    isIn = false
+    latlng = req.query.latlng.split ","
+    needle = {latitude: latlng[0], longitude: latlng[1]}
+    req.query.radius?= 250
+
+    for stop in line.stops
+      if (geolib.getDistance stop, needle) <= req.query.radius
+        isIn = true
+        break
+
+    isIn
   # name filter
-#  .then nameFilter "nameFilter", req.query.name
-  # latlng filter
-  .then (lines) ->
-    if req.query.latlng?
-      req.query.radius ?= 250
-
-      filter = []
-      latlng = req.query.latlng.split ","
-
-      for line in lines
-        for stop in line.stops
-          if (getDistance stop, {latitude: latlng[0], longitude: latlng[1]}) <= req.query.radius
-            filter.push line
-            break
-
-      lines = filter
-
-    return lines
-  # formatting
+  .then filter req.query.name, (line) ->
+    (new RegExp req.query.name, "i").test line.sources
+  # formatting and sending
   .then (lines) ->
     lines = for line in lines
       delete line.stops
       line
 
     res.json lines
-  .catch ->
-    console.log arguments
+  .catch (e) ->
+    console.log e
     res.sendStatus 500
 .get "/:id/stops", (req, res) ->
-  getLinesInformation req.params.id, true
+  getLines req.params.id, true
   # selecting line
   .then (lines) ->
     return lines[0].stops
   # name filter
-  .then (stops) ->
-    if req.query.name?
-      filter = []
-      regexp = new RegExp req.query.name, "i"
-
-      for stop in stops
-        if regexp.test stop.name
-          filter.push stop
-          break
-
-      stops = filter
-
-    return stops
-  .then (stops) ->
-    if req.query.latlng?
-      req.query.radius ?= 250
-
-      filter = []
-      latlng = req.query.latlng.split ","
-
-      for stop in stops
-        if (getDistance stop, {latitude: latlng[0], longitude: latlng[1]}) <= req.query.radius
-          filter.push stop
-          break
-
-      stops = filter
-
-    return stops
-  # formatting
+  .then filter req.query.name, (stop) ->
+    (new RegExp req.query.name, "i").test stop.name
+  # latlng filter
+#  .then filter req.query.latlng, (needle, stop) ->
+#    latlng = req.query.latlng
+#    (geolib.getDistance stop, {latitude: needle[0], longitude: needle[1]}) <= req.query.radius
+  # formatting and sending
   .then (stops) ->
     res.json stops
-
-
+  .catch ->
+    console.log arguments
+    res.sendStatus 500

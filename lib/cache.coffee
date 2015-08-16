@@ -1,7 +1,7 @@
 NodeCache = require "node-cache"
 q = require "q"
 
-module.exports = class extends NodeCache
+class Cache extends NodeCache
   get: ->
     defer = q.defer()
 
@@ -10,3 +10,5 @@ module.exports = class extends NodeCache
       defer.resolve data
 
     defer.promise
+
+module.exports = new Cache { stdTTL: 60, checkperiod: 120 }
