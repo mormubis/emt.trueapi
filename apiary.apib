@@ -1,80 +1,184 @@
 FORMAT: 1A
-HOST: http://polls.apiblueprint.org/
+HOST: http://emt.trueapi.com/
 
 # EMT
 
 Polls is a simple API allowing consumers to view polls and vote in them.
 
-## Questions Collection [/questions]
+## Lines [/lines/{id}{?latlng,name,nwlatlng,radius,selatlng}]
 
-### List All Questions [GET]
+### List Lines [GET]
+
++ Parameters
+    + id: `4` (number,optional) - Line number
+        If appears it returns information about lines with number {id}
+    + latlng: `40.4343433,-3.6460254` (optional) - center of the circumference
+        It used in conjunction with {radius} (optional). If appears, it returns lines which have stops in the circumference.
+    + name: `Plaza de Cristo Rey` (optional) - Source name or substring (case insensitive)
+        If appears, it returns lines which sources match with {name}
+    + nwlatlng: `40.4365051,-3.651318` (optional) - Top left vertex of the box
+        It used in conjunction with {selatlng}. If appears, it returns lines which have stops inside the box.
+    + radius: `50` (optional) - radius of the circumference
+        It used in conjunction with {latlng}.
+        + Default: `250`
+    + selatlng: `40.4321266,-3.6407323` (optional) - Bottom right vertex of the box
+        It used in conjunction with {nwlatlng}.
+    
 
 + Response 200 (application/json)
 
         [
             {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 2048
-                    }, {
-                        "choice": "Python",
-                        "votes": 1024
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 512
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 256
-                    }
+                "name": "1",
+                "number": "001",
+                "sources": [
+                    "PLAZA DE CRISTO REY",
+                    "PROSPERIDAD"
+                ]
+            },
+            {
+                "name": "2",
+                "number": "002",
+                "sources": [
+                    "PLAZA DE MANUEL BECERRA",
+                    "AVENIDA DE REINA VICTORIA"
+                ]
+            },
+            {
+                "name": "3",
+                "number": "003",
+                "sources": [
+                    "PUERTA DE TOLEDO",
+                    "PLAZA DE SAN AMARO"
                 ]
             }
         ]
+        
+## Nodes line [/lines/{id}/nodes{?nwlatlng,selatlng}]
 
-### Create a New Question [POST]
+### List nodes line [GET]
 
-You may create your own question using this action. It takes a JSON
-object containing a question and a collection of answers in the
-form of choices.
++ Parameters
+    + id: `4` (number) - Line number
+    + nwlatlng: `40.4365051,-3.651318` (optional) - Top left vertex of the box
+        It used in conjunction with {selatlng}. If appears, it returns nodesinside the box.
+    + selatlng: `40.4321266,-3.6407323` (optional) - Bottom right vertex of the box
+        It used in conjunction with {nwlatlng}.
 
-+ Request (application/json)
++ Response 200 (application/json)
 
-        {
-            "question": "Favourite programming language?",
-            "choices": [
-                "Swift",
-                "Python",
-                "Objective-C",
-                "Ruby"
-            ]
-        }
-
-+ Response 201 (application/json)
-
-    + Headers
-
-            Location: /questions/2
-
-    + Body
-
+        [
             {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 0
-                    }, {
-                        "choice": "Python",
-                        "votes": 0
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 0
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 0
-                    }
-                ]
+                "isForward": true,
+                "latitude": 40.438156738528,
+                "longitude": -3.6387307165792
+            },
+            {
+                "isForward": true,
+                "latitude": 40.437869021748,
+                "longitude": -3.6386277740975
+            },
+            {
+                "isForward": true,
+                "latitude": 40.437844431497,
+                "longitude": -3.6381865757244
             }
+        ]
+
+## Stops line [/lines/{id}/stops{?latlng,name,nwlatlng,radius,selatlng}]
+
+### List stops line [GET]
+
++ Parameters
+    + id: `4` (number,optional) - Line number
+    + latlng: `40.4343433,-3.6460254` (optional) - center of the circumference
+        It used in conjunction with {radius} (optional). If appears, it returns stops in the circumference.
+    + name: `Garcia Noblejas` (optional) - Source name or substring (case insensitive)
+        If appears, it returns stops match with {name}
+    + nwlatlng: `40.4365051,-3.651318` (optional) - Top left vertex of the box
+        It used in conjunction with {selatlng}. If appears, it returns stopsinside the box.
+    + radius: `50` (optional) - radius of the circumference
+        It used in conjunction with {latlng}.
+        + Default: `250`
+    + selatlng: `40.4321266,-3.6407323` (optional) - Bottom right vertex of the box
+        It used in conjunction with {nwlatlng}.
+
++ Response 200 (application/json)
+
+        [
+            {
+                "name": "HNOS.GARCIA NOBLEJAS-ALCALA",
+                "latitude": 40.437380187495,
+                "longitude": -3.6374217021624
+            },
+            {
+                "name": "HNOS.GARCIA NOBLEJAS-VITAL AZA",
+                "latitude": 40.434864962649,
+                "longitude": -3.6361010479589
+            },
+            {
+                "name": "HNOS.GARCIA NOBLEJAS-VITAL AZA",
+                "latitude": 40.435028995699,
+                "longitude": -3.6357606827963
+            }
+        ]
+        
+## Stops [/stops{?latlng,line,name,nwlatlng,radius,selatlng}]
+
+### List stops [GET]
+
++ Parameters
+    + latlng: `40.4343433,-3.6460254` (optional) - center of the circumference
+        It used in conjunction with {radius} (optional). If appears, it returns stops in the circumference.
+    + line: `4` (number,optional) - Line number
+        If appears it returns stops with line number {line}
+    + name: `Garcia Noblejas` (optional) - Source name or substring (case insensitive)
+        If appears, it returns stops which name match with {name}
+    + nwlatlng: `40.4365051,-3.651318` (optional) - Top left vertex of the box
+        It used in conjunction with {selatlng}. If appears, it returns stops inside the box.
+    + radius: `50` (optional) - radius of the circumference
+        It used in conjunction with {latlng}.
+        + Default: `250`
+    + selatlng: `40.4321266,-3.6407323` (optional) - Bottom right vertex of the box
+        It used in conjunction with {nwlatlng}.
+
++ Response 200 (application/json)
+
+        [
+            {
+                "name": "AV.VALDEMARIN-ALTAIR",
+                "lines": [
+                {
+                    "isForward": true,
+                    "number": "161"
+                }
+                ],
+                "latitude": 40.47004454502,
+                "longitude": -3.782887713069
+            },
+            {
+                "name": "AV.VALDEMARIN-LA SALLE",
+                "lines": [
+                {
+                    "isForward": true,
+                    "number": "161"
+                }
+                ],
+                "latitude": 40.468573248437,
+                "longitude": -3.7859634959744
+            },
+            {
+                "name": "BLANCA DE CASTILLA-Cº DE LA ZARZUELA",
+                "lines": [
+                {
+                    "isForward": true,
+                    "number": "161"
+                }
+                ],
+                "latitude": 40.464857879579,
+                "longitude": -3.7838595647366
+            }
+        ]
+        
+
+
