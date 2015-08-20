@@ -4,7 +4,7 @@ request = require "request"
 
 module.exports = (options = {}) ->
   defer = q.defer()
-  key = JSON.stringify options
+  key = "request:#{JSON.stringify options}"
 
   options.expiration ?= 60
 

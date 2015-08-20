@@ -1,6 +1,7 @@
 express = require "express"
 EMT = require "../emt"
 filter = require "../lib/filter"
+geolib = require "geolib"
 _ = require "underscore"
 
 module.exports = new express.Router()
@@ -22,6 +23,7 @@ module.exports = new express.Router()
   .then filter req.query.latlng, (stop) ->
     latlng = req.query.latlng.split ","
     needle = {latitude: latlng[0], longitude: latlng[1]}
+    req.query.radius?= 250
 
     (geolib.getDistance stop, needle) <= req.query.radius
   # line filter
@@ -30,3 +32,24 @@ module.exports = new express.Router()
   # name filter
   .then filter req.query.name, (stop) ->
     (new RegExp req.query.name, "i").test stop.name
+  # formatting and sending
+  .then (stops) ->
+    if req.query.line
+      stops = for stop in stops
+        delete stop.lines
+        stop
+
+    res.json stops
+  # common erros
+  .catch (e) ->
+    console.log e
+    res.sendStatus 500
+.get "/:id/arrives", (req, res) ->
+  EMT.arrives req.params.id
+  # line filter
+#  .then filter req.query.line, (arrive) ->
+  .then (arrives) ->
+    res.json arrives
+  .catch (e) ->
+    console.log e
+    res.sendStatus 500

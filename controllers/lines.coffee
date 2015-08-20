@@ -4,11 +4,12 @@ EMT = require "../emt"
 filter = require "../lib/filter"
 geolib = require "geolib"
 q = require "q"
+querystring = require "querystring"
 _ = require "underscore"
 
 getLines = (line, extended) ->
-  defer = q.defer()
-  key = line or "all"
+  key = "lines:"
+  key += if line? then line else "all"
   key += ":extended" if extended
 
   cache.get key
@@ -34,10 +35,7 @@ getLines = (line, extended) ->
       lines
   # cleaning
   .then (lines) ->
-    defer.resolve _.filter lines
-  .catch defer.reject
-
-  defer.promise
+    _.filter lines
 
 module.exports = new express.Router()
 .get "/:id?", (req, res) ->
@@ -83,24 +81,33 @@ module.exports = new express.Router()
       line
 
     res.json lines
+  # common errors
+  .catch (e) ->
+    console.log e
+    res.sendStatus 500
+.get "/:id/nodes", (req, res) ->
+  EMT.nodes req.params.id
+  # coordinates filter
+  .then filter req.query.nwlatlng, (node) ->
+    nwlatlng = req.query.nwlatlng.split ","
+    selatlng = req.query.selatlng.split ","
+    coordinates = [
+      {latitude: nwlatlng[0], longitude: nwlatlng[1]}
+      {latitude: selatlng[0], longitude: nwlatlng[1]}
+      {latitude: selatlng[0], longitude: selatlng[1]}
+      {latitude: nwlatlng[0], longitude: selatlng[1]}
+    ]
+
+    geolib.isPointInside node, coordinates
+  # sending
+  .then (nodes) ->
+    res.json nodes
+  # common errors
   .catch (e) ->
     console.log e
     res.sendStatus 500
 .get "/:id/stops", (req, res) ->
-  getLines req.params.id, true
-  # selecting line
-  .then (lines) ->
-    return lines[0].stops
-  # name filter
-  .then filter req.query.name, (stop) ->
-    (new RegExp req.query.name, "i").test stop.name
-  # latlng filter
-#  .then filter req.query.latlng, (needle, stop) ->
-#    latlng = req.query.latlng
-#    (geolib.getDistance stop, {latitude: needle[0], longitude: needle[1]}) <= req.query.radius
-  # formatting and sending
-  .then (stops) ->
-    res.json stops
-  .catch ->
-    console.log arguments
-    res.sendStatus 500
+  query = req.query
+  query?.line = req.params.id
+
+  res.redirect "/stops?#{querystring.stringify query}"
