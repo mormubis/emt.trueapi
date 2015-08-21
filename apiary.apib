@@ -123,11 +123,13 @@ Is an API that abstracts most of the information of opendata.emtmadrid.es API in
             }
         ]
         
-## Stops [/stops{?latlng,line,name,nwlatlng,radius,selatlng}]
+## Stops [/stops/{id}/{?latlng,line,name,nwlatlng,radius,selatlng}]
 
 ### List stops [GET]
 
 + Parameters
+    + id: `70` (optional) - Stop identifier
+        If appears it returns stop with identifier {id}
     + latlng: `40.4343433,-3.6460254` (optional) - center of the circumference
         It used in conjunction with {radius} (optional). If appears, it returns stops in the circumference.
     + line: `4` (number,optional) - Line number
@@ -180,5 +182,32 @@ Is an API that abstracts most of the information of opendata.emtmadrid.es API in
             }
         ]
         
+## Arrives stop [/stops/{id}/arrives]
 
+### List arrives [GET]
+
++ Parameters
+    + id: `577` (optional) - Stop identifier
+        It returns stop with identifier {id}
+
++ Response 200 (application/json)
+
+        [
+            {
+                "line": "146",
+                "timeLeft": 135
+            },
+            {
+                "line": "48",
+                "timeLeft": 226
+            },
+            {
+                "line": "146",
+                "timeLeft": 666
+            },
+            {
+                "line": "48",
+                "timeLeft": "+20min"
+            }
+        ]
 
