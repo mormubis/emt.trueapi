@@ -15,7 +15,10 @@ app
 .use "/stops", require "./controllers/stops"
 
 # fallback
-app.all "*", (req, res) ->
+app
+.all "/", (req, res) ->
+  res.redirect "http://docs.emt1.apiary.io/"
+.all "*", (req, res) ->
   res.sendStatus 404
 
 # server

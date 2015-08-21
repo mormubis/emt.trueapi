@@ -21,7 +21,7 @@ module.exports =
     # non-cached
     .catch =>
       request
-        expiration: 20
+        expiration: 3
         form: @sign data
         json: true
         method: "POST"
@@ -39,7 +39,7 @@ module.exports =
         _.uniq arrives, (value) -> JSON.stringify value
       # caching
       .then (arrives) ->
-        cache.set key, arrives, 30
+        cache.set key, arrives, 5
         arrives
 
   lines: (line) ->
@@ -134,11 +134,9 @@ module.exports =
 
     cache.get key
     .then (stops) ->
-      console.log "CACHED"
       stops
     # non-cached
     .catch =>
-      console.log "NON-CACHED"
       request
         expiration: 6 * 60 * 60
         form: @sign {}

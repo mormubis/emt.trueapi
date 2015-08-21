@@ -5,7 +5,7 @@ geolib = require "geolib"
 _ = require "underscore"
 
 module.exports = new express.Router()
-.get "/", (req, res) ->
+.get "/:id?", (req, res) ->
   EMT.stops()
   # coordinates filter
   .then filter req.query.nwlatlng, (stop) ->
@@ -40,6 +40,9 @@ module.exports = new express.Router()
         stop
 
     res.json stops
+  # id filter
+  .then filter req.params.id, (stop) ->
+    stop.id is req.params.id
   # common erros
   .catch (e) ->
     console.log e
