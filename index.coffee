@@ -1,5 +1,7 @@
 app = require "./app"
 bodyParser = require "body-parser"
+morgan = require "morgan"
+ua = require "universal-analytics"
 
 # setup
 app.use bodyParser.urlencoded extended: true
@@ -11,6 +13,8 @@ app.locals.EMT =
 
 # content
 app
+.use morgan "combined"
+#.use ua.middleware "UA-66458518-2", {cookieName: '_ga'}
 .use "/lines", require "./controllers/lines"
 .use "/stops", require "./controllers/stops"
 
