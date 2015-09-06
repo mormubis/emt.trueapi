@@ -1,6 +1,6 @@
 {
   "name": "opendata.emtmadrid",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "EMT Madrid API",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,7 @@
     "express": ">=4.13.0",
     "geolib": ">=2.0.0",
     "moment": ">=2.10.0",
-    "morgan": "^1.6.1",
+    "morgan": ">=1.6.1",
     "node-cache": ">=3.0.0",
     "q": "^1.4.1",
     "request": ">=2.60.0",

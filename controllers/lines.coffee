@@ -2,9 +2,9 @@ cache = require "../lib/cache"
 express = require "express"
 EMT = require "../emt"
 filter = require "../lib/filter"
-geolib = require "geolib"
-q = require "q"
 querystring = require "querystring"
+radiusFilter = require "../lib/radius.filter"
+squareFilter = require "../lib/square.filter"
 _ = require "underscore"
 
 getLines = (line, extended) ->
@@ -17,7 +17,7 @@ getLines = (line, extended) ->
     EMT.lines line
     .then (lines) ->
       if extended
-        return EMT.stops()
+        return EMT.stops line
         .then (stops) ->
           for stop in stops
             for line in stop.lines
@@ -39,38 +39,17 @@ getLines = (line, extended) ->
 
 module.exports = new express.Router()
 .get "/:id?", (req, res) ->
-  getLines req.params.id, (req.query.latlng || req.query.nwlatlng)?
+  getLines req.params.id, (req.query.latlng || req.query.nelatlng)?
   # coordinates filter
-  .then filter req.query.nwlatlng, (line) ->
-    nwlatlng = req.query.nwlatlng.split ","
-    selatlng = req.query.selatlng.split ","
-    coordinates = [
-      {latitude: nwlatlng[0], longitude: nwlatlng[1]}
-      {latitude: selatlng[0], longitude: nwlatlng[1]}
-      {latitude: selatlng[0], longitude: selatlng[1]}
-      {latitude: nwlatlng[0], longitude: selatlng[1]}
-    ]
-    isIn = false
+  .then filter req.query.nelatlng, (line) ->
+    matcher = squareFilter req.query.nelatlng, req.query.swlatlng
 
-    for stop in line.stops
-      if geolib.isPointInside stop, coordinates
-        isIn = true
-        break
-
-    isIn
+    (matcher line.stops).length > 0
   # distance filter
   .then filter req.query.latlng, (line) ->
-    isIn = false
-    latlng = req.query.latlng.split ","
-    needle = {latitude: latlng[0], longitude: latlng[1]}
-    req.query.radius?= 250
+    matcher = radiusFilter req.query.latlng, req.query.radius
 
-    for stop in line.stops
-      if (geolib.getDistance stop, needle) <= req.query.radius
-        isIn = true
-        break
-
-    isIn
+    (matcher line.stops).length > 0
   # name filter
   .then filter req.query.name, (line) ->
     (new RegExp req.query.name, "i").test line.sources
@@ -88,20 +67,10 @@ module.exports = new express.Router()
 .get "/:id/nodes", (req, res) ->
   EMT.nodes req.params.id
   # coordinates filter
-  .then filter req.query.nwlatlng, (node) ->
-    nwlatlng = req.query.nwlatlng.split ","
-    selatlng = req.query.selatlng.split ","
-    coordinates = [
-      {latitude: nwlatlng[0], longitude: nwlatlng[1]}
-      {latitude: selatlng[0], longitude: nwlatlng[1]}
-      {latitude: selatlng[0], longitude: selatlng[1]}
-      {latitude: nwlatlng[0], longitude: selatlng[1]}
-    ]
-
-    geolib.isPointInside node, coordinates
+  .then squareFilter req.query.nelatlng, req.query.swlatlng
   # sending
   .then (nodes) ->
-    res.json nodes
+    if nodes.length then res.json nodes else res.sendStatus 404
   # common errors
   .catch (e) ->
     console.log e
