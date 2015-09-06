@@ -145,9 +145,6 @@ module.exports =
         method: "POST"
         url: url
         strictSSL: false
-      .then (response) ->
-        console.log response
-        response
       # get result attribute
       .get "resultValues"
       # formatting
