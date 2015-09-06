@@ -1,6 +1,6 @@
 {
   "name": "opendata.emtmadrid",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "EMT Madrid API",
   "main": "index.js",
   "scripts": {

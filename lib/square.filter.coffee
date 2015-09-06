@@ -1,7 +1,7 @@
 filter = require "./filter"
 geolib = require "geolib"
 
-module.exports = (nelatlng, swlatlng, getter) ->
+module.exports = (nelatlng, swlatlng) ->
   if nelatlng
     nelatlng = nelatlng.split ","
     swlatlng = swlatlng.split ","
