@@ -13,5 +13,5 @@ module.exports = (nelatlng, swlatlng) ->
       {latitude: swlatlng[0], longitude: swlatlng[1]}
     ]
 
-  filter nelatlng || swlatlng, (value) ->
+  filter nelatlng and swlatlng, (value) ->
     geolib.isPointInside value, coordinates

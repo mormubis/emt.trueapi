@@ -59,7 +59,37 @@ module.exports = new express.Router()
       delete line.stops
       line
 
-    res.json lines
+    res.json collection:
+      items: for data in lines
+        data: data
+        href: "http://emt.trueapi.com/lines/#{data.number}"
+        link: [
+          {
+            href: "http://emt.trueapi.com/lines/#{data.number}/nodes"
+            name: "Vertex of the line"
+            rel: "search"
+          }
+          {
+            href: "http://emt.trueapi.com/lines/#{data.number}/stops",
+            name: "Stops of the line"
+            rel: "search"
+          }
+          {
+            href: "http://emt.trueapi.com/lines/#{data.number}/timetable",
+            name: "Timetable of the line"
+            rel: "search"
+          }
+        ]
+      queries: [
+        href: "http://emt.trueapi.com/lines"
+        data: [
+          {name: "latlng", value: ""}
+          {name: "name", value: ""}
+          {name: "nelatlng", value: ""}
+          {name: "swlatlng", value: ""}
+          {name: "radius", value: 250}
+        ]
+      ]
   # common errors
   .catch (e) ->
     console.log e

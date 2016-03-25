@@ -21,7 +21,13 @@ app
 # fallback
 app
 .all "/", (req, res) ->
-  res.redirect "http://docs.emt1.apiary.io/"
+  res.json collection:
+    href: "http://emt.trueapi.com/"
+    links: [
+      {href: "http://emt.trueapi.com/lines", name: "Line resource", rel: "search"}
+      {href: "http://emt.trueapi.com/stops", name: "Stop resource", rel: "search"}
+      {href: "http://docs.emt1.apiary.io/", name: "Documentation", rel: "help"}
+    ]
 .all "*", (req, res) ->
   res.sendStatus 404
 

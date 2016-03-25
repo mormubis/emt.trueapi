@@ -165,13 +165,11 @@ module.exports =
           latitude: item.latitude
           longitude: item.longitude
 
-  timetable: (line, date = moment().format "L") ->
+  timetable: (line = 1, date = moment().format "L") ->
     key = "emt:timetable"
 
-    data = {SelectDate: date}
-    if line?
-      data.Lines = line
-      key += ":#{line}"
+    data = {Lines: line, SelectDate: date}
+    key += ":#{line}"
 
     get key, data, 6 * 60 * 60, ->
       request
@@ -179,13 +177,13 @@ module.exports =
         form: sign data
         json: true
         method: "POST"
-        url: "#{EMT.url}/"
+        url: "#{EMT.url}/bus/GetTimeTableLines.php"
         strictSSL: false
       # get result attribute
       .get "resultValues"
       # formatting
       .then (response) ->
+        timetable = for item in response
+          item.timeFirst
 
-
-
-
+        timetable.sort()
