@@ -1,14 +1,12 @@
 {
-  "name": "opendata.emtmadrid",
-  "version": "1.1.2",
+  "name": "emt.trueapi",
+  "version": "2.0.0",
   "description": "EMT Madrid API",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "main": "app.js",
+  "scripts": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adelarosab/opendata.emtmadrid.git"
+    "url": "git+https://github.com/adelarosab/emt.trueapi.git"
   },
   "keywords": [
     "EMT",
@@ -17,20 +15,14 @@
   ],
   "author": "Adrián de la Rosa <adrian@delarosab.me>",
   "license": "GPL-2.0",
-  "bugs": {
-    "url": "https://github.com/adelarosab/opendata.emtmadrid/issues"
-  },
-  "homepage": "https://github.com/adelarosab/opendata.emtmadrid#readme",
+  "homepage": "https://emt.trueapi.com",
   "dependencies": {
-    "body-parser": ">=1.13.0",
-    "express": ">=4.13.0",
+    "body-parser": ">=1.15.0",
+    "express": ">=4.14.0",
     "geolib": ">=2.0.0",
-    "moment": ">=2.10.0",
-    "morgan": ">=1.6.1",
-    "node-cache": ">=3.0.0",
-    "q": "^1.4.1",
-    "request": ">=2.60.0",
-    "underscore": ">=1.8.0",
-    "universal-analytics": ">=0.3.9"
+    "moment": ">=2.15.0",
+    "morgan": ">=1.7.0",
+    "node-cache": ">=4.0.0",
+    "request": ">=2.75.0"
   }
 }
