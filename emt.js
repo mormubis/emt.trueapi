@@ -25,7 +25,7 @@ module.exports = class EMT {
       // get result attribute
       .then((response) => response.arrives)
       // format results
-      .then(function(response) {
+      .then(function(response = []) {
         return response.map(function(value) {
           return {line: value.lineId, time: value.busTimeLeft};
         });
@@ -92,6 +92,7 @@ module.exports = class EMT {
     return request(
       Object.assign(
         {
+          expiration: 24 * 60 * 60,
           form: this.sign(options.data),
           json: true,
           method: 'POST',
