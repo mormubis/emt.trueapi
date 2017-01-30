@@ -10,176 +10,134 @@ module.exports = class EMT {
   }
 
   static get URL() {
-    return 'https://openbus.emtmadrid.es:9443/emt-proxy-server/last';
+    return process.env.EMT_URL;
   }
 
   arrives(stop) {
     let options = {
+      expiration: 1,
       url: '/geo/GetArriveStop.php'
     };
 
-    if (stop !== null) {
-      options.data = {idStop: stop};
-    }
+    if (stop !== null) { options.data = {idStop: stop}; }
 
     return this.request(options)
       // get result attribute
-      .then((res) => res.arrives)
+      .then((response) => response.arrives)
       // format results
-      .then(
-        (response) => {
-          return response.map(
-            (value) => {
-              return {line: value.lineId, time: value.busTimeLeft};
-            }
-          );
-        }
-      );
+      .then(function(response) {
+        return response.map(function(value) {
+          return {line: value.lineId, time: value.busTimeLeft};
+        });
+      });
   }
 
   lines(line, date = moment().format('L')) {
     let options = {
-      data: {
-        SelectDate: date
-      },
+      data: {SelectDate: date},
       url: '/bus/GetListLines.php'
     };
 
-    if (line != null) {
-      options.data.Lines = line;
-    }
+    if (line != null) { options.data.Lines = line; }
 
     return this.request(options)
       // get result attribute
       .then((response) => response.resultValues)
       // fix
-      .then(
-        (response = []) => {
-          if (!Array.isArray(response)) {
-            response = [response];
-          }
-
-          return response;
-        }
-      )
+      .then(function(response = []) {
+        return Array.isArray(response) ? response : [response];
+      })
       // format
-      .then(
-        (response) => {
-          let lines = [];
+      .then(function(response) {
+        let lines = [];
 
-          response.forEach(
-            (value)=> {
-              const number = parseInt(value.line);
+        response.forEach(function(value) {
+          const number = parseInt(value.line);
 
-              lines[number] = {
-                name: value.label,
-                number,
-                sources: [
-                  value.nameA.trim(),
-                  value.nameB.trim()
-                ]
-              };
-            }
-          );
+          lines[number] = {
+            name: value.label,
+            number,
+            sources: [
+              value.nameA.trim(),
+              value.nameB.trim()
+            ]
+          };
+        });
 
-          return lines;
-        }
-      );
+        return line ? lines[line] : lines.filter(value => value != null);
+      });
   }
 
   nodes(line) {
-    let options = {
-      url: '/bus/GetRouteLinesRoute.php'
-    };
+    const options = {url: '/bus/GetRouteLinesRoute.php'};
 
-    if (line !== null) {
-      options.data = {Lines: line};
-    }
+    if (line !== null) { options.data = {Lines: line}; }
 
     return this.request(options)
       // get result attribute
       .then((response) => response.resultValues)
       // format
-      .then(
-        (response = []) => {
-          return response.map(
-            (value) => {
-              return {
-                isForward: value.secDetail < 20,
-                latitude: value.latitude,
-                longitude: value.longitude
-              };
-            }
-          );
-        }
-      );
+      .then(function(response = []) {
+        return response.map(function(value) {
+          return {
+            isForward: value.secDetail < 20,
+            latitude: value.latitude,
+            longitude: value.longitude
+          };
+        });
+      });
   }
 
   request(options = {}) {
-    options = Object.assign({}, options);
-
-    options.form = this.sign(options.data);
-    options.json = true;
-    options.method = 'POST';
-    options.strictSSL = false;
-    options.url = `${EMT.URL}${options.url}`;
-
-    return request(options);
+    return request(
+      Object.assign(
+        {
+          form: this.sign(options.data),
+          json: true,
+          method: 'POST',
+          strictSSL: false
+        },
+        options,
+        {url: `${EMT.URL}${options.url}`}
+      )
+    );
   }
 
   sign(data = {}) {
-    data = Object.assign({}, data);
-
-    data.idClient = this.client;
-    data.passKey = this.password;
-
-    return data;
+    return Object.assign(
+      {idClient: this.client, passKey: this.password},
+      data
+    );
   }
 
-  stops(line, date = moment().format('L')) {
+  stops(date = moment().format('L')) {
     let options = {
       data: {SelectDate: date},
-      url: line !== null ? '/bus/GetRouteLines.php' : '/bus/GetNodesLines.php'
+      url: '/bus/GetNodesLines.php'
     };
-
-    if (line !== null) {
-      options.data.Lines = line;
-    }
 
     return this.request(options)
       // get result attribute
       .then((response) => response.resultValues)
-      .then(
-        (response) => {
-          return response.map(
-            (value) => {
-              let lines = [
-                {
-                  line: value.line,
-                  isForward: value.secDetails === 10
-                }
-              ];
+      // format
+      .then(function(response) {
+        return response.map(function(value) {
+          const lines = value.lines
+            .filter((value) => !!value)
+            .map(function(line) {
+              const [number, direction] = line.split('/');
 
-              if (value.lines != null) {
-                lines = value.lines.map(
-                  (line) => {
-                    line = line.split('/');
+              return {isForward: direction === '1', number: Number(number)};
+            });
 
-                    return {isForward: line[1] === '1', number: line[0]};
-                  }
-                );
-              }
-
-              return {
-                id: value.node,
-                name: value.name,
-                lines,
-                latitude: value.latitude,
-                longitude: value.longitude
-              };
-            }
-          );
-        }
-      );
+          return {
+            id: value.node,
+            name: value.name,
+            lines,
+            latitude: value.latitude,
+            longitude: value.longitude
+          };
+        });
+      });
   }
 };

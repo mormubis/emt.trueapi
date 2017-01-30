@@ -1,10 +1,9 @@
 const app = require('./app');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const moment = require('moment');
+const EMT = require('./emt');
 const morgan = require('morgan');
 
-app.locals.EMT = JSON.parse(fs.readFileSync('./credentials.json', 'utf8'));
+app.locals.EMT = new EMT(process.env.EMT_CLIENT, process.env.EMT_PASSWORD);
 
 app
 // Setup
@@ -17,4 +16,4 @@ app
   // .all('/', require('./controllers/index'))
   .all('*', (req, res) => res.sendStatus(404))
   // Run
-  .listen();
+  .listen(3000);
